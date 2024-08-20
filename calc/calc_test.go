@@ -10,7 +10,7 @@ func TestAddition(t *testing.T) {
 	assertEqual(t, 0, a.Calculate(0, 0))
 }
 
-func assertEqual(t *testing.T, a interface{}, b interface{}) {
+func assertEqual(t *testing.T, a, b any) {
 	if a != b {
 		t.Helper()
 		t.Errorf("%v != %v", a, b)
