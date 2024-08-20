@@ -20,6 +20,10 @@ func main() {
 		output   io.Writer  = os.Stdout
 	)
 
+	if len(inputs) != 2 {
+		panic(fmt.Errorf("expected 2 inputs, got %d", len(inputs)))
+	}
+
 	a, err := strconv.Atoi(inputs[0])
 	if err != nil {
 		panic(err)
