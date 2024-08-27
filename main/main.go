@@ -14,27 +14,39 @@ type Calculator interface {
 }
 
 func main() {
-	var (
-		inputs              = os.Args[1:]
-		addition Calculator = calc.Addition{}
-		output   io.Writer  = os.Stdout
-	)
+	handler := NewHandler(calc.Addition{}, os.Stdout)
+	err := handler.Handle(os.Args[1:])
+	if err != nil {
+		panic(err)
+	}
+}
 
-	if len(inputs) != 2 {
-		panic(fmt.Errorf("expected 2 inputs, got %d", len(inputs)))
+type Handler struct {
+	calculator Calculator
+	output     io.Writer
+}
+
+func NewHandler(calculator Calculator, output io.Writer) *Handler {
+	return &Handler{calculator: calculator, output: output}
+}
+
+func (this *Handler) Handle(args []string) error {
+	if len(args) != 2 {
+		return fmt.Errorf("expected 2 inputs, got %d", len(args))
 	}
 
-	a, err := strconv.Atoi(inputs[0])
+	a, err := strconv.Atoi(args[0])
 	if err != nil {
-		panic(err)
+		return err
 	}
-	b, err := strconv.Atoi(inputs[1])
+	b, err := strconv.Atoi(args[1])
 	if err != nil {
-		panic(err)
+		return err
 	}
-	addition.Calculate(a, b)
-	_, err = fmt.Fprintf(output, "Result: %d\n", addition.Calculate(a, b))
+	this.calculator.Calculate(a, b)
+	_, err = fmt.Fprintf(this.output, "Result: %d\n", this.calculator.Calculate(a, b))
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
