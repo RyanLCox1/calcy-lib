@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -32,21 +33,27 @@ func NewHandler(calculator Calculator, output io.Writer) *Handler {
 
 func (this *Handler) Handle(args []string) error {
 	if len(args) != 2 {
-		return fmt.Errorf("expected 2 inputs, got %d", len(args))
+		return fmt.Errorf("%w: two args required (you provided %d)", errWrongNumArgs, len(args))
 	}
 
 	a, err := strconv.Atoi(args[0])
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: first arg (%s) %w", errMalformedArgument, args[0], err)
 	}
 	b, err := strconv.Atoi(args[1])
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: second arg (%s) %w", errMalformedArgument, args[1], err)
 	}
-	this.calculator.Calculate(a, b)
-	_, err = fmt.Fprintf(this.output, "Result: %d\n", this.calculator.Calculate(a, b))
+	c := this.calculator.Calculate(a, b)
+	_, err = fmt.Fprintf(this.output, "Result: %d\n", c)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w write failed, %w", errOutputWriteErr, err)
 	}
 	return nil
 }
+
+var (
+	errWrongNumArgs      = errors.New("usage: calc <a> <b>")
+	errMalformedArgument = errors.New("invalid argument")
+	errOutputWriteErr    = errors.New("output writer err")
+)
