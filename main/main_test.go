@@ -3,63 +3,64 @@ package main
 import (
 	"bytes"
 	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/smartystreets/calcy-lib/calc"
 )
 
+// assert equal
+func assertEqual(t *testing.T, expected, actual any) {
+	t.Helper()
+	if !reflect.DeepEqual(expected, actual) {
+		t.Errorf("\nExpected: [%v]\nActual: [%v]", expected, actual)
+	}
+}
+
+func assertError(t *testing.T, expected, actual error) {
+	t.Helper()
+	if !errors.Is(actual, expected) {
+		t.Errorf("\nExpected: [%v]\nActual: [%v]", expected, actual)
+	}
+}
+
 func TestWrongNumArgs(t *testing.T) {
 	output := bytes.Buffer{}
 	handler := NewHandler(calc.Addition{}, &output)
 	err := handler.Handle([]string{"1"})
-	if !errors.Is(err, errWrongNumArgs) {
-		t.Errorf("expected %v, got %v", errWrongNumArgs, err)
-	}
-	if output.Len() > 0 {
-		t.Error("expected empty output")
-	}
+	assertError(t, errWrongNumArgs, err)
+	assertEqual(t, "", output.String())
 }
 
 func TestInvalidFirstArg(t *testing.T) {
 	output := bytes.Buffer{}
 	handler := NewHandler(calc.Addition{}, &output)
 	err := handler.Handle([]string{"a", "1"})
-	if !errors.Is(err, errMalformedArgument) {
-		t.Errorf("expected %v, got %v", errOutputWriteErr, err)
-	}
-	if output.Len() > 0 {
-		t.Error("expected empty output")
-	}
+	assertError(t, errMalformedArgument, err)
+	assertEqual(t, "", output.String())
 }
 
 func TestInvalidSecondArg(t *testing.T) {
 	output := bytes.Buffer{}
 	handler := NewHandler(calc.Addition{}, &output)
 	err := handler.Handle([]string{"1", "a"})
-	if !errors.Is(err, errMalformedArgument) {
-		t.Errorf("expected %v, got %v", errOutputWriteErr, err)
-	}
-	if output.Len() > 0 {
-		t.Error("expected empty output")
-	}
+	assertError(t, errMalformedArgument, err)
+	assertEqual(t, "", output.String())
 }
 
 func TestInvalidWrite(t *testing.T) {
 	output := &badOutput{}
 	handler := NewHandler(calc.Addition{}, output)
 	err := handler.Handle([]string{"1", "1"})
-	if !errors.Is(err, errOutputWriteErr) {
-		t.Errorf("expected %v, got %v", errOutputWriteErr, err)
-	}
+	assertError(t, errOutputWriteErr, err)
 }
 
 func TestHappyPath(t *testing.T) {
 	output := bytes.Buffer{}
 	handler := NewHandler(calc.Addition{}, &output)
 	err := handler.Handle([]string{"1", "2"})
-	if err != nil {
-		t.Errorf("expected no error, got %v", err)
-	}
+	assertEqual(t, nil, err)
+	assertEqual(t, "Result: 3\n", output.String())
 }
 
 type badOutput struct {
